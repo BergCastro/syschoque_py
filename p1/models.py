@@ -3,6 +3,7 @@ from django.db import models
 # Create your models here.
 from django.db import models
 from tinymce.models import HTMLField
+from django.conf import settings
 
 
 class SituacaoFuncional(models.Model):
@@ -14,6 +15,11 @@ class SituacaoFuncional(models.Model):
     def save(self, *args, **kwargs):
         self.nome = self.nome.upper()
         super(SituacaoFuncional, self).save(*args, **kwargs)
+
+    class Meta:
+        verbose_name_plural = "Situação Funcional"
+        verbose_name = 'Situação Funcional'
+        db_table = 'p1_situacaofuncional'
 
 
 class Opm(models.Model):
@@ -43,8 +49,24 @@ class Cargo(models.Model):
         self.abreviacao = self.abreviacao.upper()
         super(Cargo, self).save(*args, **kwargs)
 
+class TipoPublicacao(models.Model):
+    nome = models.CharField(max_length=30)
+
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name_plural = "Tipos de Publicação"
+        verbose_name = 'Tipo de Publicação'
+        db_table = 'p1_tipos_publicacao'
+
+
+
+
+
 
 class PolicialMilitar(models.Model):
+    imagem_up = models.ImageField(verbose_name='Modificar Imagem', null=True, blank=True, upload_to="pm_imagens/")
     matricula = models.CharField(verbose_name='Matrícula',
                                  max_length=8,
                                  default='00000000',
@@ -65,7 +87,8 @@ class PolicialMilitar(models.Model):
                             )
     situacao_funcional = models.ForeignKey(SituacaoFuncional,
                                            on_delete=models.DO_NOTHING,
-                                           verbose_name='Situação Funcional')
+                                           verbose_name='Situação Funcional',
+                                           )
     data_nascimento = models.DateField(verbose_name='Data Nascimento')
     SEXO = (
         ('M', 'Masculino'),
@@ -87,21 +110,22 @@ class PolicialMilitar(models.Model):
                       ('O+', 'O+')
     )
     tipo_sanguineo = models.CharField(
-        max_length=2,
+        max_length=3,
         choices=TIPO_SANGUINEO,
         verbose_name='Tipo Sanguíneo'
     )
     cpf = models.CharField(verbose_name='CPF', max_length=11)
     rg = models.CharField(verbose_name='RG', max_length=15)
+    added_by = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                null=True, blank=True, on_delete=models.SET_NULL)
+    telefone1 = models.CharField('Telefone 1', max_length=10)
+    telefone2 = models.CharField('Telefone 2', max_length=10)
+
 
     def __str__(self):
         return self.nome
 
-    def save(self, *args, **kwargs):
-        self.matricula = self.matricula.upper()
-        self.nome_guerra = self.nome_guerra.upper()
-        self.nome = self.nome.upper()
-        super(PolicialMilitar, self).save(*args, **kwargs)
+
 
     class Meta:
         verbose_name_plural = "Policiais"
@@ -110,7 +134,22 @@ class PolicialMilitar(models.Model):
 
 
 
+class Publicacao(models.Model):
+    policial = models.ForeignKey(PolicialMilitar, on_delete=models.CASCADE)
 
+    tipo = models.ForeignKey(TipoPublicacao,
+                                null=True, blank=True, on_delete=models.SET_NULL)
+    data = models.DateField()
+    boletim = models.CharField(max_length=30)
+    descricao = models.TextField(max_length=200)
+
+    def __str__(self):
+        return self.boletim
+
+    class Meta:
+        verbose_name_plural = "Publicações"
+        verbose_name = 'Publicação'
+        db_table = 'p1_publicacoes'
 
 
 
